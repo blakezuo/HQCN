@@ -259,13 +259,13 @@ def evaluate(args, eval_dataset, model, vocab, batch_size, prefix=""):
 parser = argparse.ArgumentParser()
 
 ## Required parameters
-parser.add_argument("--data_dir", default='data/aol', type=str, required=False,
+parser.add_argument("--data_dir", default='/home/xiaochen_zuo/sigir2021/daht/data/tiangong', type=str, required=False,
                     help="The input data dir. Should contain the .tsv files (or other data files) for the task.")
 parser.add_argument("--task_name", default='stateful_search', type=str, required=False,
                     help="The name of the task to train")
 parser.add_argument("--output_dir", default='output', type=str, required=False,
                     help="The output directory where the model predictions and checkpoints will be written.")
-parser.add_argument("--embed_file", default='data/aol/fasttext.model', type=str, required=False,
+parser.add_argument("--embed_file", default='/home/xiaochen_zuo/sigir2021/daht/data/tiangong/fasttext.model', type=str, required=False,
                     help="embedding file")
 parser.add_argument("--embed_size", default=256, type=int,
                     help="The size of word embedding")
