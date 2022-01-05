@@ -259,13 +259,13 @@ def evaluate(args, eval_dataset, model, vocab, batch_size, prefix=""):
 parser = argparse.ArgumentParser()
 
 ## Required parameters
-parser.add_argument("--data_dir", default='/home/xiaochen_zuo/sigir2021/daht/data/tiangong', type=str, required=False,
+parser.add_argument("--data_dir", default='data/aol', type=str, required=False,
                     help="The input data dir. Should contain the .tsv files (or other data files) for the task.")
 parser.add_argument("--task_name", default='stateful_search', type=str, required=False,
                     help="The name of the task to train")
 parser.add_argument("--output_dir", default='output', type=str, required=False,
                     help="The output directory where the model predictions and checkpoints will be written.")
-parser.add_argument("--embed_file", default='/home/xiaochen_zuo/sigir2021/daht/data/tiangong/fasttext.model', type=str, required=False,
+parser.add_argument("--embed_file", default='data/aol/fasttext.model', type=str, required=False,
                     help="embedding file")
 parser.add_argument("--embed_size", default=256, type=int,
                     help="The size of word embedding")
@@ -412,11 +412,11 @@ model = HQCN(vocab, d_word_vec=args.embed_size, d_model=args.embed_size, d_inner
 model.to(args.device)
 # Training
 if args.do_train:
-    train_dataset = PairHQCNDataset(os.path.join(args.data_dir, "train_long_feature.json"), args.max_query_length, args.max_doc_length, 
+    train_dataset = PairHQCNDataset(os.path.join(args.data_dir, "train_feature.json"), args.max_query_length, args.max_doc_length, 
                                            args.output_mode, args.dataset, args.history_num, vocab)
-    eval_dataset = HQCNDataset(os.path.join(args.data_dir, "train_long_feature.json"), args.max_query_length, args.max_doc_length, 
+    eval_dataset = HQCNDataset(os.path.join(args.data_dir, "test_feature.json"), args.max_query_length, args.max_doc_length, 
                                            args.output_mode, args.dataset, args.history_num, vocab)
-    test_dataset = HQCNDataset(os.path.join(args.data_dir, "train_long_feature.json"), args.max_query_length, args.max_doc_length, 
+    test_dataset = HQCNDataset(os.path.join(args.data_dir, "test_feature.json"), args.max_query_length, args.max_doc_length, 
                                            args.output_mode, args.dataset, args.history_num, vocab)
 
     global_step, tr_loss = train(args, train_dataset, eval_dataset, model, vocab)
@@ -424,9 +424,9 @@ if args.do_train:
 
 
 if not args.do_train and args.do_eval:
-    eval_dataset = HQCNDataset(os.path.join(args.data_dir, "test_long_feature.json"), args.max_query_length, args.max_doc_length, 
+    eval_dataset = HQCNDataset(os.path.join(args.data_dir, "test_feature.json"), args.max_query_length, args.max_doc_length, 
                                            args.output_mode, args.dataset, args.history_num, vocab)
-    test_dataset = HQCNDataset(os.path.join(args.data_dir, "test_long_feature.json"), args.max_query_length, args.max_doc_length, 
+    test_dataset = HQCNDataset(os.path.join(args.data_dir, "test_feature.json"), args.max_query_length, args.max_doc_length, 
                                            args.output_mode, args.dataset, args.history_num, vocab)
 
 best_eval_mrr = 0.0

@@ -8,6 +8,7 @@ from scipy.stats import pearsonr
 import math
 import time
 import os
+import sys
 from tqdm import tqdm
 import re
 from sklearn.metrics.pairwise import cosine_similarity
@@ -171,7 +172,6 @@ def add_feature_train(infile, outfile):
 	rf = open(infile, 'r', encoding = 'utf-8')
 	wf = open(outfile, 'w', encoding='utf-8')
 	for line in tqdm(rf.readlines()):
-	# for line in rf.readlines():
 		sample = json.loads(line.strip())
 		hq_terms, hc_terms = list(), list()
 		for his in sample['history']:
@@ -181,10 +181,10 @@ def add_feature_train(infile, outfile):
 		pd_terms = sample['pos_candidate'].split()
 		nd_terms = sample['neg_candidate'].split()
 
-		sample['pos_features'] += get_feats(q_terms, pd_terms, hq_terms, hc_terms)
-		sample['neg_features'] += get_feats(q_terms, nd_terms, hq_terms, hc_terms)
-		assert len(sample['pos_features']) == 44
-		assert len(sample['neg_features']) == 44
+		sample['pos_features'] = get_feats(q_terms, pd_terms, hq_terms, hc_terms)
+		sample['neg_features'] = get_feats(q_terms, nd_terms, hq_terms, hc_terms)
+		assert len(sample['pos_features']) == 12
+		assert len(sample['neg_features']) == 12
 		jsonObj = json.dumps(sample, ensure_ascii=False)
 		wf.write(jsonObj)
 		wf.write('\n')
@@ -297,17 +297,17 @@ def add_feature_test(infile, outfile):
 		wf.write('\n')
 
 
-path = "./aol"
+path = sys.argv[1]
 d_word = 256
 train_file = os.path.join(path, 'session_train.txt')
 test_file = os.path.join(path, 'session_test.txt')
 get_idf_file([train_file, test_file], os.path.join(path, "idf.json"))
 
 term_dict = json.load(open(os.path.join(path, "idf.json"),'r',encoding='utf-8'), strict=False)
-print("loading w2v_embedding...", time.asctime(time.localtime(time.time())))
+print("loading word_embedding...", time.asctime(time.localtime(time.time())))
 emb_dict = read_embedding(os.path.join(path, 'fasttext.model'))
 print(len(emb_dict))
 print("get features...", time.asctime(time.localtime(time.time())))
 
-add_feature_train(os.path.join(path, "train_long.json"), os.path.join(path, "train_long_feature.json"))
-# add_feature_test(os.path.join(path, "test_long.json"), os.path.join(path, "test_long_feature.json"))
+add_feature_train(os.path.join(path, "train_pair.json"), os.path.join(path, "train_feature.json"))
+add_feature_test(os.path.join(path, "test.json"), os.path.join(path, "test_feature.json"))

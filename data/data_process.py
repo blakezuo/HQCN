@@ -1,17 +1,15 @@
 import json
 import os
 import copy
+import sys
 import numpy as np
 import pickle
 from tqdm import tqdm
 from collections import Counter, defaultdict
 
-dataset = "aol"
-# dataset = "tiangong"
-
 def get_format_train_data():
 	filename = os.path.join(dataset, "session_train.txt")
-	write_file = os.path.join(dataset, "train.json")
+	write_file = os.path.join(dataset, "train_format.json")
 	rf = open(filename)
 	wf = open(write_file, 'w')
 	line = rf.readline()
@@ -22,39 +20,31 @@ def get_format_train_data():
 		for idx, query in enumerate(sample['query']):
 			newsample = dict()
 			query_text = query['text']
-			pos, neg = False, False
-			pos_title = ""
+			pos_title = []
 			obj = list()
 			for idx_doc, click in enumerate(query['clicks']):
-				if click['label']:
-					if pos:
-						continue
-					pos_title = click['title']
+				if 'label' in click and click['label']:
+					pos_title.append(click['title'])
 					newsample['label'] = 1
-					pos = True
 				else:
-					if neg:
-						continue
-					if pos and click['title'] == pos_title:
+					if click['title'] in pos_title:
 						continue
 					newsample['label'] = 0
-					neg = True
 				newsample['query_id'] = sid + '_' + str(idx) + '_' + str(idx_doc)
 				newhistory = copy.deepcopy(history)
 				newhistory.append({'text':query_text, 'click':click['title']})
 				newsample['session'] = newhistory
-				obj.append(json.dumps(newsample, ensure_ascii=False))
-				if pos and neg:
-					break
-			if pos and neg and len(obj) == 2:
-				for o in obj:
-					wf.write(o + '\n')
-				history.append({'text':query_text, 'click':pos_title})
+				jsonObj = json.dumps(newsample, ensure_ascii=False)
+				wf.write(jsonObj + '\n')
+			if not pos_title:
+				history.append({'text':query_text, 'click':""})
+			else:
+				history.append({'text':query_text, 'click':pos_title[0]})
 		line = rf.readline()
 
 def get_format_test_data():
 	filename = os.path.join(dataset, "session_test.txt")
-	write_file = os.path.join(dataset, "test.json")
+	write_file = os.path.join(dataset, "test_format.json")
 	rf = open(filename)
 	wf = open(write_file, 'w')
 	line = rf.readline()
@@ -75,7 +65,7 @@ def get_format_test_data():
 					label = 0
 				newhistory = copy.deepcopy(history)
 				newsample['query_id'] = sid + '_' + str(idx) + '_' + str(idx_doc)
-				newhistory.append({'text':query_text, 'click':click['title'], 'sltb':click['sltb']})
+				newhistory.append({'text':query_text, 'click':click['title']})
 				newsample['session'] = newhistory
 				newsample['label'] = label
 				jsonObj = json.dumps(newsample, ensure_ascii=False)
@@ -88,7 +78,7 @@ def get_format_test_data():
 
 def get_format_test_data_tiangong():
 	filename = os.path.join(dataset, "session_test.txt")
-	write_file = os.path.join(dataset, "test.json")
+	write_file = os.path.join(dataset, "test_format.json")
 	rf = open(filename)
 	wf = open(write_file, 'w')
 	line = rf.readline()
@@ -149,9 +139,9 @@ def get_reformulation_type():
 		else:
 			return 3
 
-	train_data = "./aol/train.json"
+	train_data = os.path.join(dataset, f"{mode}_format.json")
 	stopwords = "./stopwords.txt"
-	output_file = "./aol/train_reform.json"
+	output_file = os.path.join(dataset, f"{mode}.json")
 	rf = open(stopwords)
 	wf = open(output_file,'w')
 	stops = dict()
@@ -163,6 +153,8 @@ def get_reformulation_type():
 	statistic = [0,0,0,0]
 	for line in tqdm(lines):
 		sample = json.loads(line.strip())
+		if len(sample['session']) < 2:
+			continue
 		prev_query = ""
 		for pair in sample['session']:
 			query = pair['text']
@@ -172,11 +164,10 @@ def get_reformulation_type():
 			prev_query = query
 		jsonObj = json.dumps(sample, ensure_ascii=False)
 		wf.write(jsonObj + '\n')
-	print(statistic)
 
 def get_pair_data():
-	rf = open("./aol/train_reform.json")
-	wf = open("./aol/train_pair.json", 'w')
+	rf = open(os.path.join(dataset, f"{mode}.json"))
+	wf = open(os.path.join(dataset, f"{mode}_pair.json"), 'w')
 	train_set = defaultdict(list)
 	for line in tqdm(rf.readlines()):
 		sample = json.loads(line.strip())
@@ -196,32 +187,15 @@ def get_pair_data():
 		newsample['reform_type'] = pos_list[0]['session'][-1]['reform_type']
 		for i in range(max(pl, nl)):
 			newsample['pos_candidate'] = pos_list[i%pl]['session'][-1]['click']
-			newsample['pos_features'] = pos_list[i%pl]['session'][-1]['aol']
 			newsample['neg_candidate'] = neg_list[i%nl]['session'][-1]['click']
-			newsample['neg_features'] = neg_list[i%nl]['session'][-1]['aol']
 			jsonObj = json.dumps(newsample, ensure_ascii=False)
 			wf.write(jsonObj + '\n')
 
-def get_long_data():
-	rf = open("./aol/train_pair.json")
-	wf = open("./aol/train_long.json", 'w')
-	for line in rf.readlines():
-		sample = json.loads(line.strip())
-		if len(sample['history']) < 1:
-			continue
-		wf.write(line)
+if __name__ == "__main__":
+	dataset = sys.argv[1]
+	mode = sys.argv[2]
+	globals()[sys.argv[3]]()
 
-def get_long_data_test():
-	rf = open("./aol/test_reform.json")
-	wf = open("./aol/test_long.json", 'w')
-	for line in rf.readlines():
-		sample = json.loads(line.strip())
-		if len(sample['session']) < 2:
-			continue
-		wf.write(line)
-
-# get_training data
-get_format_train_data()
-get_reformulation_type()
-get_pair_data()
-get_long_data()
+# get_format_train_data()
+# get_reformulation_type()
+# get_pair_data()

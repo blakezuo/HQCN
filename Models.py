@@ -76,7 +76,7 @@ class HQCN(nn.Module):
         self.num_layers = n_layers
         self.class_weight_reform = torch.FloatTensor([35378, 298660, 598312, 267352]).cuda() # AOL
         # self.class_weight_reform = torch.FloatTensor([36575, 281827, 788722, 261177]).cuda() # Tiangong
-        # 归一+取倒数+归一
+        # uniform + reverse + uniform
         self.class_weight_reform = self.class_weight_reform.sum() / self.class_weight_reform
         self.class_weight_reform = self.class_weight_reform / self.class_weight_reform.sum()
         self.reform_type = self.class_weight_reform.size(0)
@@ -113,9 +113,9 @@ class HQCN(nn.Module):
         self.removed_attentive_knrm_layer = AttentiveKnrmLayer(d_model, dropout=dropout)
         self.mean_attentive_knrm_layer = AttentiveKnrmLayer(d_model, dropout=dropout)
         self.ad_hoc_knrm_layer = KNRMLayer(d_model)
-        self.feat_linear = nn.Linear(11, 1, 1)
+        self.feat_linear = nn.Linear(12, 1, 1)
         self.ranker = nn.Linear(7, 1, 1)
-        self.bn = nn.BatchNorm1d(11)
+        self.bn = nn.BatchNorm1d(12)
 
         for p in self.parameters():
             if p.dim() > 1:
